@@ -4,12 +4,16 @@ pragma solidity ^0.8.0;
 //Contract imports
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
+//Library Imports
+import "./Libraries/Base64.sol";
+
 //Helper function imports
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl") {
+contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
     //Defining the special moves the characters can perform outside of basic attack
     enum SpecialMoveTypes {Heal, IncreaseDamage, IncreaseDefence, IncreaseCritChance}
 
@@ -41,13 +45,15 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl") {
 
     //Defining the mechanism for keeping track of the next id for the nft mints
     using Counters for Counters.Counter; //setting up library
-    Counters.Counter internal _tokenId; //creating global variable
+    Counters.Counter internal _tokenID; //creating global variable
 
     BrawlerAttributes[] brawlerTypes;
     BossAttributes[] public bossTypes;
 
     mapping(uint256 => BrawlerAttributes) public tokenIdToAttributes;
     mapping(address => uint256) public ownerToTokenId;
+
+    event BrawlerMinted(address sender, uint256 newBrawlerId, uint256 brawlerType);
 
     //Special moves are currently hardcoded but should be made dynamically randomised and chosen at mint
     constructor(
@@ -57,17 +63,13 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl") {
         uint256[] memory _brawlerDamage,
         uint256[] memory _brawlerDefence,
         uint256[] memory _brawlerCritChance,
-        SpecialMoveTypes[] memory _brawlerSpecialMove,
-        string[] memory _bossName,
-        string[] memory _bossImageURI,
-        uint256[] memory _bossTotalHP,
-        uint256[] memory _bossDamage,
-        uint256[] memory _bossDefence,
-        uint256[] memory _bossCritChance,
-        SpecialMoveTypes[] memory _bossSpecialMove
+        SpecialMoveTypes[] memory _brawlerSpecialMove
     ) {
+        //counter variable
+        uint256 i;
+
         //Use arguments to instantiate the different brawler types
-        for(uint256 i = 0; i < _brawlerName.length; i++){
+        for(i = 0; i < _brawlerName.length; i++){
             brawlerTypes.push(
                 BrawlerAttributes({
                     brawlerType: i,
@@ -88,32 +90,127 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl") {
             );
         }
 
-
-        //Use arguments to instantiate the different boss types
-        for(uint256 i = 0; i < _bossName.length; i++){
-            bossTypes.push(
-                BossAttributes({
-                    bossType: i,
-                    name: _bossName[i],
-                    imageURI: _bossImageURI[i],
-                    totalHP: _bossTotalHP[i],
-                    damage: _bossDamage[i],
-                    defence: _bossDefence[i],
-                    critChance: _bossCritChance[i],
-                    specialMove: _bossSpecialMove[i]
-                })
-            );
-
-            BossAttributes memory boss = bossTypes[i];
-            console.log(
-                "Created boss %s",
-                boss.name
-            );
-        }
-
         //Need to do this in deployment to avoid a token being minted with id 0
-        _tokenId.increment();
+        _tokenID.increment();
     }
 
-    
+    function  mintBrawler(uint256 _brawlerType) external {
+        uint256 newBrawlerId = _tokenID.current();
+
+        _safeMint(msg.sender, newBrawlerId);
+
+        BrawlerAttributes memory brawlerArchitype = brawlerTypes[_brawlerType];
+
+        tokenIdToAttributes[newBrawlerId] = BrawlerAttributes({
+            brawlerType: _brawlerType,
+            name: brawlerArchitype.name,
+            imageURI: brawlerArchitype.imageURI,
+            totalHP: brawlerArchitype.totalHP,
+            damage: brawlerArchitype.damage,
+            defence: brawlerArchitype.defence,
+            critChance: brawlerArchitype.critChance,
+            specialMove: brawlerArchitype.specialMove
+        });
+
+        ownerToTokenId[msg.sender] = newBrawlerId;
+
+        console.log("Minted brawler number:%s, which is of type %s", newBrawlerId, _brawlerType);
+
+        _tokenID.increment();
+
+        emit BrawlerMinted(msg.sender, newBrawlerId, _brawlerType);
+    }
+
+    function addBoss(
+        string memory _bossName,
+        string memory _bossImageURI,
+        uint256 _bossTotalHP,
+        uint256 _bossDamage,
+        uint256 _bossDefence,
+        uint256 _bossCritChance,
+        SpecialMoveTypes _bossSpecialMove
+    ) external onlyOwner {
+        //Use arguments to instantiate the different boss types
+        uint256 bossType = bossTypes.length;
+
+        bossTypes.push(
+            BossAttributes({
+                bossType: bossType,
+                name: _bossName,
+                imageURI: _bossImageURI,
+                totalHP: _bossTotalHP,
+                damage: _bossDamage,
+                defence: _bossDefence,
+                critChance: _bossCritChance,
+                specialMove: _bossSpecialMove
+            })
+        );
+
+        BossAttributes memory boss = bossTypes[bossType];
+        console.log(
+            "Created boss %s",
+            boss.name
+        );
+    }
+
+    function tokenURI(uint256 _tokenId) public view override returns(string memory) {
+        BrawlerAttributes memory NFTAttributes = tokenIdToAttributes[_tokenId];
+
+        //convert all ints to strings
+        string memory strTokenId = Strings.toString(_tokenId);
+        string memory strTotalHP = Strings.toString(NFTAttributes.totalHP);
+        string memory strDamage = Strings.toString(NFTAttributes.damage);
+        string memory strDefence = Strings.toString(NFTAttributes.defence);
+        string memory strCritChance = Strings.toString(NFTAttributes.critChance);
+        string memory strSpecialMove = specialMoveToString(NFTAttributes.specialMove);
+
+        string memory NFTjson = Base64.encode(
+            abi.encodePacked(
+                '{"name": "',
+                NFTAttributes.name,
+                '  #', strTokenId,
+                '", "description": "The first generation of blockchain brawlers", "image": "',
+                NFTAttributes.imageURI,
+                '", "attributes": [ { "trait_type": "Total_HP", "value": ',strTotalHP,'}, { "trait_type": "Damage", "value": ',
+                strDamage,'}, {"trait_type": "Defence", "value": ',
+                strDefence, '},  {"trait_type": "Critical Hit Chance", "value": ', strCritChance,
+                '},  {"trait_type": "Special Move", "value": "', strSpecialMove, '"} ]}'
+            )
+        );
+
+        string memory output = string(abi.encodePacked("data:application/json;base64,", NFTjson));
+
+        return output;
+    }
+
+    function checkOwnsBrawler() public view returns(BrawlerAttributes memory){
+        uint256 playerBrawlerId = ownerToTokenId[msg.sender];
+
+        if(playerBrawlerId > 0){
+            return tokenIdToAttributes[playerBrawlerId];
+        }else{
+            BrawlerAttributes memory emptyBrawler;
+            return emptyBrawler;
+        }
+    }
+
+    function getBrawlerTypes() public view returns(BrawlerAttributes[] memory){
+        return brawlerTypes;
+    }
+
+    function getBoss(uint256 _bossType) public view returns(BossAttributes memory){
+        return bossTypes[_bossType];
+    }
+
+    function specialMoveToString(SpecialMoveTypes _specialMove) internal pure returns(string memory) {
+        if(_specialMove == SpecialMoveTypes.Heal){
+            return "Heal";
+        }else if(_specialMove == SpecialMoveTypes.IncreaseDamage){
+            return "Increase Damage";
+        }else if(_specialMove == SpecialMoveTypes.IncreaseDefence){
+            return "Increase Defence";
+        }else {
+            return "Increase Crit Chance";
+        }
+    }
 }
