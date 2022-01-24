@@ -24,5 +24,14 @@ module.exports = {
       url: process.env.DEVELOPMENT_API_KEY,
       accounts: [process.env.PRIVATE_KEY],
     },
-  }
+  },
+  solidity: {
+    version: "0.8.0",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
 };

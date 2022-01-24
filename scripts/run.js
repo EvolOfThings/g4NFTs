@@ -57,6 +57,9 @@ async function main() {
     await bossTx.wait();
     console.log("Added boss %s", bossNames[i]);
   }
+
+  let boss = await brawlerContract.initBigBoss();
+  boss.wait()
   
   //Mint the two types of characters
   let mintTx = await brawlerContract.mintBrawler(botID);
@@ -69,6 +72,16 @@ async function main() {
 
   let tokenURITx = await brawlerContract.tokenURI(1);
   console.log(tokenURITx);
+
+  let txn;
+  txn = await brawlerContract.mintCharacterNFT(2);
+  await txn.wait();
+
+  txn = await brawlerContract.attackBoss();
+  await txn.wait();
+
+  txn = await brawlerContract.attackBoss();
+  await txn.wait();
 }
 
 // We recommend this pattern to be able to use async/await everywhere

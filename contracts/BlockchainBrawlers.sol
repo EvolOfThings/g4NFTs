@@ -18,7 +18,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
     enum SpecialMoveTypes {Heal, IncreaseDamage, IncreaseDefence, IncreaseCritChance}
 
     //Defining the attributes of the playable characters
-    struct BrawlerAttributes {
+    struct BrawlerAttrs {
         uint256 brawlerType;
         string name;
         string imageURI;
@@ -32,7 +32,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
     //Defining the attributes of the bosses the characters will fight
     //This needs to be its own struct as the different types of bosses will be stored using an array 
     //and bossType maps these attributes to the corresponding boss
-    struct BossAttributes {
+    struct BossAttrs {
         uint256 bossType;
         string name;
         string imageURI;
@@ -42,18 +42,29 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
         uint256 critChance;
         SpecialMoveTypes specialMove;
     }
+    
 
     //Defining the mechanism for keeping track of the next id for the nft mints
     using Counters for Counters.Counter; //setting up library
     Counters.Counter internal _tokenID; //creating global variable
 
-    BrawlerAttributes[] brawlerTypes;
-    BossAttributes[] public bossTypes;
+    BrawlerAttrs[] brawlerTypes;
+    BossAttrs[] public bossTypes;
 
-    mapping(uint256 => BrawlerAttributes) public tokenIdToAttributes;
-    mapping(address => uint256) public ownerToTokenId;
+    mapping(uint256 => BrawlerAttrs) public nftHolderAttrs;
+    mapping(address => uint256) public nftHolders;
+
+    //BossAttrs public bigBoss;
 
     event BrawlerMinted(address sender, uint256 newBrawlerId, uint256 brawlerType);
+
+    event CharacterNFTMinted(
+        address sender,
+        uint256 tokenId,
+        uint256 brawlerType
+    );
+
+    event AttackComplete(uint256 newBossHp, uint256 newPlayerHp);
 
     //Special moves are currently hardcoded but should be made dynamically randomised and chosen at mint
     constructor(
@@ -67,11 +78,9 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
     ) {
         //counter variable
         uint256 i;
-
-        //Use arguments to instantiate the different brawler types
         for(i = 0; i < _brawlerName.length; i++){
             brawlerTypes.push(
-                BrawlerAttributes({
+                BrawlerAttrs({
                     brawlerType: i,
                     name: _brawlerName[i],
                     imageURI: _brawlerImageURI[i],
@@ -83,14 +92,12 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
                 })
             );
 
-            BrawlerAttributes memory brawler = brawlerTypes[i];
+            BrawlerAttrs memory brawler = brawlerTypes[i];
             console.log(
                 "Created brawler %s", 
                 brawler.name
             );
         }
-
-        //Need to do this in deployment to avoid a token being minted with id 0
         _tokenID.increment();
     }
 
@@ -99,9 +106,9 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
 
         _safeMint(msg.sender, newBrawlerId);
 
-        BrawlerAttributes memory brawlerArchitype = brawlerTypes[_brawlerType];
+        BrawlerAttrs memory brawlerArchitype = brawlerTypes[_brawlerType];
 
-        tokenIdToAttributes[newBrawlerId] = BrawlerAttributes({
+        nftHolderAttrs[newBrawlerId] = BrawlerAttrs({
             brawlerType: _brawlerType,
             name: brawlerArchitype.name,
             imageURI: brawlerArchitype.imageURI,
@@ -112,7 +119,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
             specialMove: brawlerArchitype.specialMove
         });
 
-        ownerToTokenId[msg.sender] = newBrawlerId;
+        nftHolders[msg.sender] = newBrawlerId;
 
         console.log("Minted brawler number:%s, which is of type %s", newBrawlerId, _brawlerType);
 
@@ -134,7 +141,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
         uint256 bossType = bossTypes.length;
 
         bossTypes.push(
-            BossAttributes({
+            BossAttrs({
                 bossType: bossType,
                 name: _bossName,
                 imageURI: _bossImageURI,
@@ -146,31 +153,28 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
             })
         );
 
-        BossAttributes memory boss = bossTypes[bossType];
-        console.log(
-            "Created boss %s",
-            boss.name
-        );
+        BossAttrs memory boss = bossTypes[bossType];
+        console.log("Created boss %s", boss.name);
     }
 
     function tokenURI(uint256 _tokenId) public view override returns(string memory) {
-        BrawlerAttributes memory NFTAttributes = tokenIdToAttributes[_tokenId];
+        BrawlerAttrs memory NFTAttrs = nftHolderAttrs[_tokenId];
 
         //convert all ints to strings
         string memory strTokenId = Strings.toString(_tokenId);
-        string memory strTotalHP = Strings.toString(NFTAttributes.totalHP);
-        string memory strDamage = Strings.toString(NFTAttributes.damage);
-        string memory strDefence = Strings.toString(NFTAttributes.defence);
-        string memory strCritChance = Strings.toString(NFTAttributes.critChance);
-        string memory strSpecialMove = specialMoveToString(NFTAttributes.specialMove);
+        string memory strTotalHP = Strings.toString(NFTAttrs.totalHP);
+        string memory strDamage = Strings.toString(NFTAttrs.damage);
+        string memory strDefence = Strings.toString(NFTAttrs.defence);
+        string memory strCritChance = Strings.toString(NFTAttrs.critChance);
+        string memory strSpecialMove = specialMoveToString(NFTAttrs.specialMove);
 
         string memory NFTjson = Base64.encode(
             abi.encodePacked(
                 '{"name": "',
-                NFTAttributes.name,
+                NFTAttrs.name,
                 '  #', strTokenId,
                 '", "description": "The first generation of blockchain brawlers", "image": "',
-                NFTAttributes.imageURI,
+                NFTAttrs.imageURI,
                 '", "attributes": [ { "trait_type": "Total_HP", "value": ',strTotalHP,'}, { "trait_type": "Damage", "value": ',
                 strDamage,'}, {"trait_type": "Defence", "value": ',
                 strDefence, '},  {"trait_type": "Critical Hit Chance", "value": ', strCritChance,
@@ -183,24 +187,33 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
         return output;
     }
 
-    function checkOwnsBrawler() public view returns(BrawlerAttributes memory){
-        uint256 playerBrawlerId = ownerToTokenId[msg.sender];
+    function checkOwnsBrawler() public view returns(BrawlerAttrs memory){
+        uint256 playerBrawlerId = nftHolders[msg.sender];
 
         if(playerBrawlerId > 0){
-            return tokenIdToAttributes[playerBrawlerId];
+            return nftHolderAttrs[playerBrawlerId];
         }else{
-            BrawlerAttributes memory emptyBrawler;
+            BrawlerAttrs memory emptyBrawler;
             return emptyBrawler;
         }
     }
 
-    function getBrawlerTypes() public view returns(BrawlerAttributes[] memory){
+    function getBrawlerTypes() public view returns(BrawlerAttrs[] memory){
         return brawlerTypes;
     }
 
-    function getBoss(uint256 _bossType) public view returns(BossAttributes memory){
+    function getBoss(uint256 _bossType) public view returns(BossAttrs memory){
         return bossTypes[_bossType];
     }
+
+    // //TO-DO: should be able to choose
+    // function initBigBoss() public {
+    //     bigBoss = bossTypes[0];
+    //     console.log("Initializing boss %s w/ HP %s, img %s", 
+    //     bigBoss.name, 
+    //     bigBoss.totalHP, 
+    //     bigBoss.imageURI);
+    // }
 
     function specialMoveToString(SpecialMoveTypes _specialMove) internal pure returns(string memory) {
         if(_specialMove == SpecialMoveTypes.Heal){
@@ -213,4 +226,53 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
             return "Increase Crit Chance";
         }
     }
+
+    // function mintCharacterNFT(uint256 _brawlerType) external {
+    //     uint256 newItemId = _tokenID.current();
+    //     _safeMint(msg.sender, newItemId);
+
+    //     nftHolderAttrs[newItemId] = BrawlerAttrs({
+    //         brawlerType: brawlerTypes[_brawlerType].brawlerType,
+    //         name: brawlerTypes[_brawlerType].name,
+    //         imageURI: brawlerTypes[_brawlerType].imageURI,
+    //         totalHP: brawlerTypes[_brawlerType].totalHP,
+    //         damage: brawlerTypes[_brawlerType].damage,
+    //         defence: brawlerTypes[_brawlerType].defence,
+    //         critChance: brawlerTypes[_brawlerType].critChance,
+    //         specialMove: brawlerTypes[_brawlerType].specialMove
+    //     });
+
+    //     console.log("Minted NFT w/ tokenId %s and characterIndex %s", newItemId, _brawlerType);
+
+    //     nftHolders[msg.sender] = newItemId;
+
+    //     _tokenID.increment();
+    //     emit CharacterNFTMinted(msg.sender, newItemId, _brawlerType);
+    // }
+
+    // function attackBoss() public {
+    //     // Get the state of the player's NFT.
+    //     uint256 nftTokenIdOfPlayer = nftHolders[msg.sender];
+    //     BrawlerAttrs storage player = nftHolderAttrs[nftTokenIdOfPlayer];
+    //     console.log("Player w/ character %s about to attack. Has %s HP and %s AD", player.name, player.totalHP, player.damage);
+    //     console.log("Boss %s has %s HP and %s AD", bigBoss.name, bigBoss.totalHP, bigBoss.damage);
+
+    //     require(player.totalHP > 0, "Error: character must have HP to attack boss.");
+    //     require(bigBoss.totalHP > 0, "Error: boss must have HP to attack boss.");
+
+    //     if (bigBoss.totalHP < player.damage) {
+    //         bigBoss.totalHP = 0;
+    //     } else {
+    //         bigBoss.totalHP = bigBoss.totalHP - player.damage;
+    //     }
+
+    //     if (player.totalHP < bigBoss.damage) {
+    //         player.totalHP = 0;
+    //     } else {
+    //         player.totalHP = player.totalHP - bigBoss.damage;
+    //     }
+
+    //     console.log("Boss attacked player. New player hp: %s\n", player.totalHP);
+    //     emit AttackComplete(bigBoss.totalHP, player.totalHP);
+    // }
 }
