@@ -95,6 +95,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
     }
 
     function  mintBrawler(uint256 _brawlerType) external {
+        require(_brawlerType < brawlerTypes.length, "Brawler type does not exist");
         uint256 newBrawlerId = _tokenID.current();
 
         _safeMint(msg.sender, newBrawlerId);
@@ -213,4 +214,19 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
             return "Increase Crit Chance";
         }
     }
+
+    // Was thinking we may need a function that can translate the special move to data that is actionable
+    // int the front end. E.g. what effect does the special move have on the stat, how long does it last
+    // and how long must the user wait until they can use it again
+    // function specialMoveToMoveData(SpecialMoveTypes _specialMove) external pure returns(string memory){
+    //     if(_specialMove == SpecialMoveTypes.Heal){
+    //         return "{Attribute: totalHP, value_increase: 50%, wait: 1, cooldown: 3}";
+    //     }else if(_specialMove == SpecialMoveTypes.IncreaseDamage){
+    //         return "{Attribute: damage, value_increase: 25%, wait: 2, cooldown: 2}";
+    //     }else if(_specialMove == SpecialMoveTypes.IncreaseDefence){
+    //         return "{Attribute: defence, value_increase: 25%, wait: 2, cooldown: 2}";
+    //     }else {
+    //         return "{Attribute: critChance, value_increase: 100%, wait: 2, cooldown: 2}";
+    //     }
+    // }
 }

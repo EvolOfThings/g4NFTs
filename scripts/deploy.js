@@ -2,23 +2,22 @@ const hre = require("hardhat");
 
 async function main() {
   //Brawler character setup
-  const brawlerNames = ["Bot", "Special Agent"];
   const brawlerImgs = [
     "https://i.pinimg.com/236x/5a/e2/ef/5ae2efa7167ea56a14ba2c8b5db3e77d.jpg",
     "https://i.pinimg.com/564x/ba/5d/4d/ba5d4d0a4147a0b1a90437daf7681ec0.jpg"
   ];
+  const brawlerNames = ["Bot", "Special Agent"];
   const brawlerTotalHPs = [100, 150];
   const brawlerDmgs = [50, 40];
   const brawlerDefences = [5, 10];
   const brawlerCritChance = [10, 5];
   const brawlerSpecialMoves = [1, 0];
+  const botID = 0;
+  const specialAgentID = 1;
 
   //Boss' character setup
   const bossNames = ["Forge Master", "Ice Ravager"];
-  const bossImgs = [
-    'https://i.pinimg.com/564x/48/f9/02/48f90200b97bcd9fcb3610d2cea7b7c0.jpg', 
-    'https://i.pinimg.com/564x/53/11/fd/5311fdfcd3c5549632b474a53c2585f3.jpg'
-  ];
+  const bossImgs = ['https://i.pinimg.com/564x/48/f9/02/48f90200b97bcd9fcb3610d2cea7b7c0.jpg', 'https://i.pinimg.com/564x/53/11/fd/5311fdfcd3c5549632b474a53c2585f3.jpg'];
   const bossTotalHPs = [300, 250];
   const bossDmgs = [20, 25];
   const bossDefence = [5, 0];
@@ -42,6 +41,8 @@ async function main() {
   console.log("Blockchain Brawler contract deployed to:", brawlerContract.address);
 
   //Create the bosses
+  console.log("Adding bosses");
+
   let bossTx;
   for(i = 0; i < bossNames.length; i++){
     bossTx = await brawlerContract.addBoss(
@@ -54,6 +55,7 @@ async function main() {
       bossSpecialMoves[i]
     )
     await bossTx.wait();
+    console.log("Added boss %s", bossNames[i]);
   }
 }
 
