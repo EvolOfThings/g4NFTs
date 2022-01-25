@@ -47,6 +47,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
     using Counters for Counters.Counter; //setting up library
     Counters.Counter internal _tokenID; //creating global variable
 
+    //Holds the base types for both the bosses and the playable nfts
     BrawlerAttributes[] brawlerTypes;
     BossAttributes[] public bossTypes;
 
@@ -122,6 +123,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
         emit BrawlerMinted(msg.sender, newBrawlerId, _brawlerType);
     }
 
+    //Used to add the bosse that players will battle in game
     function addBoss(
         string memory _bossName,
         string memory _bossImageURI,
@@ -184,6 +186,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
         return output;
     }
 
+    //Checks if the user owns an NFT and returns its attributes if so
     function checkOwnsBrawler() public view returns(BrawlerAttributes memory){
         uint256 playerBrawlerId = ownerToTokenId[msg.sender];
 
@@ -195,11 +198,13 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
         }
     }
 
+    //Returns the different base character types a user can play as
     function getBrawlerTypes() public view returns(BrawlerAttributes[] memory){
         return brawlerTypes;
     }
 
     function getBoss(uint256 _bossType) public view returns(BossAttributes memory){
+        require(_bossType < bossTypes.length, "Boss type does not exist");
         return bossTypes[_bossType];
     }
 
