@@ -1,6 +1,7 @@
 import React, { useEffect, useState }  from 'react';
 import './App.css';
 import SelectBrawler from './Components/SelectBrawler';
+import Arena from './Components/Arena';
 import BlockchainBrawlers from './utility/BlockchainBrawlers.json';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, transformBrawlerData } from './constants';
@@ -92,7 +93,7 @@ useEffect(() => {
   };
 
 
-const renderCharacter = () => {
+const renderBrawlers = () => {
   if (!currentAccount) {
     return (
       <div className="connect-wallet-container">
@@ -110,6 +111,10 @@ const renderCharacter = () => {
     );
   } else if (currentAccount && !characterNFT) {
     return <SelectBrawler setCharacterNFT={setCharacterNFT} />;
+    
+  }
+  else if (currentAccount && characterNFT) {
+    return <Arena characterNFT={characterNFT} />;
   }
 };
 
@@ -119,7 +124,7 @@ const renderCharacter = () => {
         <div className="header-container">
           <p className="header gradient-text">Blockchain Brawlers</p>
           <p className="sub-text">Slay da BOSS!</p>
-           {renderCharacter()}
+           {renderBrawlers()}
         </div>
         <div className="footer-container">
           <a

@@ -13,4 +13,16 @@ const transformBrawlerData = (BrawlerData) => {
     };
   };
 
-export { CONTRACT_ADDRESS,  transformBrawlerData};
+  const transformBossData = (BossData) => {
+    return {
+      name: BossData.name,
+      imageURI: BossData.imageURI,
+      critChance: BossData.critChance.toNumber(),
+      totalHP: BossData.totalHP.toNumber(),
+      damage: BossData.damage.toNumber(),
+      defence: BossData.defence.toNumber(),
+      specialMove: BossData.specialMove,
+    };
+  };
+
+export { CONTRACT_ADDRESS,  transformBrawlerData, transformBossData};

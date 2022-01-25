@@ -5,7 +5,7 @@ import BlockchainBrawlers from '../../utility/BlockchainBrawlers.json';
 
 import './SelectBrawler.css';
 
-const SelectBrawler = ({ setCharacterNFT }) => {
+const SelectBrawler = ({ setBrawlerNFT }) => {
   const [brawlers, setBrawlers] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -50,7 +50,7 @@ const SelectBrawler = ({ setCharacterNFT }) => {
       if (gameContract) {
         const characterNFT = await gameContract.checkOwnsBrawler();
         console.log('CharacterNFT: ', characterNFT);
-        // setBrawlerNFT(transformBrawlerData(characterNFT));
+        setBrawlerNFT(transformBrawlerData(characterNFT));
       }
     };
     if (gameContract) {
