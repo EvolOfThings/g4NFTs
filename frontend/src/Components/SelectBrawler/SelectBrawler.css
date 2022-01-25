@@ -28,7 +28,7 @@ font-family: monospace;
 }
 
 .brawler-item img {
-  height: 300px;
+  height: 100%;
   width: 350px;
   border-radius: 10px;
   object-fit: cover;
