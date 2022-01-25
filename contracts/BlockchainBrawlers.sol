@@ -56,6 +56,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
 
     event BrawlerMinted(address sender, uint256 newBrawlerId, uint256 brawlerType);
 
+
     //Special moves are currently hardcoded but should be made dynamically randomised and chosen at mint
     constructor(
         string[] memory _brawlerName,
@@ -208,7 +209,7 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
         return bossTypes[_bossType];
     }
 
-    function specialMoveToString(SpecialMoveTypes _specialMove) internal pure returns(string memory) {
+    function specialMoveToString(SpecialMoveTypes _specialMove) public pure returns(string memory) {
         if(_specialMove == SpecialMoveTypes.Heal){
             return "Heal";
         }else if(_specialMove == SpecialMoveTypes.IncreaseDamage){
@@ -222,16 +223,16 @@ contract BlockchainBrawlers is ERC721("Blockchain Brawlers", "Brawl"), Ownable {
 
     // Was thinking we may need a function that can translate the special move to data that is actionable
     // int the front end. E.g. what effect does the special move have on the stat, how long does it last
-    // and how long must the user wait until they can use it again
-    // function specialMoveToMoveData(SpecialMoveTypes _specialMove) external pure returns(string memory){
-    //     if(_specialMove == SpecialMoveTypes.Heal){
-    //         return "{Attribute: totalHP, value_increase: 50%, wait: 1, cooldown: 3}";
-    //     }else if(_specialMove == SpecialMoveTypes.IncreaseDamage){
-    //         return "{Attribute: damage, value_increase: 25%, wait: 2, cooldown: 2}";
-    //     }else if(_specialMove == SpecialMoveTypes.IncreaseDefence){
-    //         return "{Attribute: defence, value_increase: 25%, wait: 2, cooldown: 2}";
-    //     }else {
-    //         return "{Attribute: critChance, value_increase: 100%, wait: 2, cooldown: 2}";
-    //     }
-    // }
+//     // and how long must the user wait until they can use it again
+    function specialMoveToMoveData(SpecialMoveTypes _specialMove) external pure returns(string memory){
+        if(_specialMove == SpecialMoveTypes.Heal){
+            return "{Attribute: totalHP, value_increase: 50%, wait: 1, cooldown: 3}";
+        }else if(_specialMove == SpecialMoveTypes.IncreaseDamage){
+            return "{Attribute: damage, value_increase: 25%, wait: 2, cooldown: 2}";
+        }else if(_specialMove == SpecialMoveTypes.IncreaseDefence){
+            return "{Attribute: defence, value_increase: 25%, wait: 2, cooldown: 2}";
+        }else {
+            return "{Attribute: critChance, value_increase: 100%, wait: 2, cooldown: 2}";
+        }
+    }
 }
