@@ -87,6 +87,7 @@ describe("BlockchainBrawlers", () => {
     const bossDefence = [5, 0];
     const bossCritChance = [2, 5];
     const bossSpecialMoves = [2, 3];
+    const outOfRangeBossType = 2;
     
     let bossTx;
 
@@ -112,6 +113,10 @@ describe("BlockchainBrawlers", () => {
       expect(bossTx.critChance).to.equal(bossCritChance[i]);
       expect(bossTx.specialMove).to.equal(bossSpecialMoves[i]);
     }
+
+    await expect(
+      brawlerContract.getBoss(outOfRangeBossType)
+    ).to.be.revertedWith("Boss type does not exist");
   });
 
   it("Reverts when a non-owner attempts to add a boss", async () => {
