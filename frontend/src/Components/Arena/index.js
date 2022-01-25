@@ -7,7 +7,22 @@ import './Arena.css';
 const Arena = ({ characterNFT }) => {
   const [gameContract, setGameContract] = useState(null);
   const [boss, setBoss] = useState(null);
-  const runAttackAction = async () => {};
+  const [attackState, setAttackState] = useState('');
+
+  console.log("characterNFT", characterNFT);
+
+  const attackBoss = () => {
+    console.log('characterNFT special move:', characterNFT.specialMove);
+    try {
+      if (gameContract) {
+        setAttackState('attacking');  
+        console.log('characterNFT special move:', characterNFT.specialMove);
+      }
+    } catch (error) {
+      console.error('Error attacking boss:', error);
+      setAttackState('');
+    }
+  };
 
   useEffect(() => {
     const { ethereum } = window;
@@ -43,7 +58,7 @@ const Arena = ({ characterNFT }) => {
     <div className="arena-container">
      {boss && (
       <div className="boss-container">
-        <div className={`boss-content`}>
+        <div className={`boss-content ${attackState}`}>
           <h2>🔥 {boss.name} 🔥</h2>
           <div className="image-content">
             <img src={boss.imageURI} alt={`Boss ${boss.name}`} />
@@ -57,11 +72,10 @@ const Arena = ({ characterNFT }) => {
     )}
 
 {boss && <div className="attack-container">
-          <button className="cta-button" onClick={runAttackAction}>
+          <button className="cta-button" onClick={() => attackBoss()}>
             {`💥 Attack ${boss.name}`}
           </button>
-        </div>
-        }
+        </div>}
 
 {characterNFT && (
       <div className="players-container">
@@ -86,6 +100,8 @@ const Arena = ({ characterNFT }) => {
         </div>
       </div>
     )}
+
+
 
     </div>
   );

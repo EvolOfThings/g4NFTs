@@ -73,7 +73,7 @@ const SelectBrawler = ({ setBrawlerNFT }) => {
         const mintTxn = await gameContract.mintBrawler(brawlerId);
         await mintTxn.wait();
         setLoading(mintTxn && mintTxn);
-        alert(`Check your minted NFT here: https://testnets.opensea.io/assets/${gameContract}/${tokenId.toNumber()}`)
+        // alert(`Check your minted NFT here: https://testnets.opensea.io/assets/${gameContract}/${tokenId.toNumber()}`)
         console.log('mintTxn:', mintTxn);
       }
     } catch (error) {
