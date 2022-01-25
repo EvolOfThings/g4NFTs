@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, transformBrawlerData } from '../../constants';
 import BlockchainBrawlers from '../../utility/BlockchainBrawlers.json';
+import LoadingIndicator from '../LoadingIndicator';
 
 import './SelectBrawler.css';
 
 const SelectBrawler = ({ setBrawlerNFT }) => {
   const [brawlers, setBrawlers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [mintingCharacter, setMintingCharacter] = useState(false);
 
   const [gameContract, setGameContract] = useState(null);
   useEffect(() => {
@@ -44,9 +45,6 @@ const SelectBrawler = ({ setBrawlerNFT }) => {
     };
 
     const onBrawlerMint = async (sender, tokenId, characterIndex) => {
-      console.log(
-        `BrawlerMinted - sender: ${sender} tokenId: ${tokenId.toNumber()} characterIndex: ${characterIndex.toNumber()}`
-      );
       if (gameContract) {
         const characterNFT = await gameContract.checkOwnsBrawler();
         console.log('CharacterNFT: ', characterNFT);
@@ -66,18 +64,16 @@ const SelectBrawler = ({ setBrawlerNFT }) => {
   }, [gameContract]);
 
   const mintBrawlerAction = (brawlerId) => async () => {
-    setLoading(true);
+    setMintingCharacter(true);
     try {
       if (gameContract) {
         console.log('Minting character in progress...');
         const mintTxn = await gameContract.mintBrawler(brawlerId);
         await mintTxn.wait();
-        setLoading(mintTxn && mintTxn);
-        // alert(`Check your minted NFT here: https://testnets.opensea.io/assets/${gameContract}/${tokenId.toNumber()}`)
-        console.log('mintTxn:', mintTxn);
+        setMintingCharacter(false);
       }
     } catch (error) {
-      setLoading(false);
+      setMintingCharacter(false);
       console.warn('mintBrawlerAction Error:', error);
     }
   };
@@ -102,9 +98,16 @@ const SelectBrawler = ({ setBrawlerNFT }) => {
   return (
     <div className="select-brawler-container">
       <h2>Mint Your Brawler. Choose unwisely.</h2>
-      {loading && <p>Minting in Progress</p>}
       {brawlers?.length > 0 && (
       <div className="brawler-grid">{renderBrawlers()}</div>
+    )}
+     {mintingCharacter && (
+      <div className="loading">
+        <div className="indicator">
+          <LoadingIndicator />
+          <p>Minting In Progress...</p>
+        </div>
+      </div>
     )}
     </div>
   );

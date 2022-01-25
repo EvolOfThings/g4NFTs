@@ -6,6 +6,10 @@
   align-items: center;
   color: white;
 }
+.select-brawler-container h2{
+font-family: monospace;
+}
+
 
 .select-brawler-container .brawler-grid {
   width: 100%;
@@ -52,8 +56,26 @@
   border-bottom-right-radius: 10px;
   border: none;
   cursor: pointer;
-  background-color: rgb(32, 129, 226);
+  /* background-color: rgb(32, 129, 226); */
+  background-color: #444691;
   color: white;
   font-weight: bold;
   font-size: 16px;
+}
+
+.select-brawler-container .loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 75px;
+}
+
+.select-brawler-container .loading .indicator {
+  display: flex;
+}
+
+.select-brawler-container .loading .indicator p {
+  font-weight: bold;
+  font-size: 28px;
+  padding-left: 5px;
 }

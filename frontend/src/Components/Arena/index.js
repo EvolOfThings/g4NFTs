@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, transformBossData } from '../../constants';
 import BlockchainBrawlers from '../../utility/BlockchainBrawlers.json';
 import './Arena.css';
+import LoadingIndicator from '../LoadingIndicator';
 
 const Arena = ({ characterNFT, characterSpecialMove }) => {
   const [gameContract, setGameContract] = useState(null);
@@ -14,6 +15,8 @@ const Arena = ({ characterNFT, characterSpecialMove }) => {
   const [bossCritChanceHP, setBossCritChanceHP] = useState();
   const [bossDamage, setBossDamage] = useState();
   const [bossSpecialMove, setBossSpecialMove] = useState('');
+
+  const [showToast, setShowToast] = useState(false);
 
 //   const [bossSpecial, setBossSpecial] = useState(false);
 
@@ -61,8 +64,14 @@ const bossAttacks = async () => {
       if (gameContract) {
         setAttackState('attacking');
         setBossCritChanceHP(bossCritChanceHP - characterNFT.damage);
-        bossAttacks();
+        setTimeout(() => {
+            bossAttacks();
+          }, 5000);
         // !bossSpecial ? bossAttacks() : SpecialAttackByBoss(bossSpecialMove);
+        setShowToast(true);
+        setTimeout(() => {
+          setShowToast(false);
+        }, 5000);
       }
     } catch (error) {
       console.error('Error attacking boss:', error);
@@ -92,14 +101,16 @@ useEffect(()=> {
       case "Heal":
         setPlayerCritChanceHP(playerCritChanceHP >= characterNFT.totalHP ? characterNFT.totalHP : playerCritChanceHP + 30);
           break;
-    case "IncreaseDamage": 
+    case "Increase Damage": 
     setBossCritChanceHP(bossCritChanceHP - (characterNFT.damage + 30));
+    bossAttacks();
             break;
-    case "IncreaseDefence":  
+    case "Increase Defence":  
     setPlayerCritChanceHP(playerCritChanceHP >= characterNFT.totalHP ? characterNFT.totalHP : playerCritChanceHP + 20);
         break;
-    case "IncreaseCritChance":  
+    case "Increase Crit Chance":  
     setPlayerCritChanceHP(playerCritChanceHP >= characterNFT.totalHP ? characterNFT.totalHP : playerCritChanceHP + 10);
+    bossAttacks();
     break;
       default:
           break;
@@ -166,6 +177,13 @@ useEffect(()=> {
     )}
 
     {/* {bossSpecial && <p>Boss Special Move Activated</p>} */}
+
+    {attackState === 'attacking' && (
+        <div className="loading-indicator">
+          <LoadingIndicator />
+          <p>Attacking ⚔️</p>
+        </div>
+      )}
 
 {characterNFT && (
       <div className="players-container">

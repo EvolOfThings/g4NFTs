@@ -5,6 +5,7 @@ import Arena from './Components/Arena';
 import BlockchainBrawlers from './utility/BlockchainBrawlers.json';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, transformBrawlerData } from './constants';
+import LoadingIndicator from "./Components/LoadingIndicator";
 
 // Constants
 const GITHUB_LINK = "https://github.com/EvolOfThings/g4NFTs";
@@ -13,12 +14,14 @@ const App = () => {
   const [currentAccount, setCurrentAccount] = useState(null);
   const [characterNFT, setCharacterNFT] = useState(null);
   const [characterSpecialMove, setCharacterSpecialMove] = useState();
+  const [isLoading, setIsLoading] = useState(false);
 
   const checkWallet = async () => {
     try {
       const { ethereum } = window;
       if (!ethereum) {
         alert('Make sure you have MetaMask installed!');
+        setIsLoading(false);
         return;
       } else {
         const accounts = await ethereum?.request({ method: 'eth_accounts' });
@@ -33,6 +36,7 @@ const App = () => {
     } catch (error) {
       console.log(error);
     }
+    setIsLoading(false);
   };
   const checkNetwork = async () => {
     try { 
@@ -47,6 +51,7 @@ const App = () => {
   useEffect(() => {
     checkWallet();
     checkNetwork();
+    setIsLoading(true);
   }, []);
 
 useEffect(() => {
@@ -70,6 +75,7 @@ useEffect(() => {
     } else {
       console.log('No character NFT found');
     }
+    setIsLoading(false);
   };
   if (currentAccount) {
     console.log('CurrentAccount:', currentAccount);
@@ -97,6 +103,9 @@ useEffect(() => {
 
 
 const renderBrawlers = () => {
+  if (isLoading) {
+    return <LoadingIndicator />;
+  }
   if (!currentAccount) {
     return (
       <div className="connect-wallet-container">
@@ -113,7 +122,7 @@ const renderBrawlers = () => {
       </div>
     );
   } else if (currentAccount && !characterNFT) {
-    return <SelectBrawler setCharacterNFT={setCharacterNFT} />;
+    return <SelectBrawler setCharacterNFT={(NFT)=>setCharacterNFT(NFT)} />;
     
   }
   else if (currentAccount && characterNFT) {
