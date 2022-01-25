@@ -12,6 +12,7 @@ const GITHUB_LINK = "https://github.com/EvolOfThings/g4NFTs";
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState(null);
   const [characterNFT, setCharacterNFT] = useState(null);
+  const [characterSpecialMove, setCharacterSpecialMove] = useState();
 
   const checkWallet = async () => {
     try {
@@ -62,8 +63,10 @@ useEffect(() => {
     const txn = await gameContract.checkOwnsBrawler();
     console.log("txn", txn);
     if (txn.name) {
-      console.log('User has character NFT');
-      setCharacterNFT(transformBrawlerData(txn));
+      const transformData = transformBrawlerData(txn);
+      setCharacterNFT(transformData);
+      const specialMove = await gameContract.specialMoveToString(transformData.specialMove);
+      setCharacterSpecialMove(specialMove);
     } else {
       console.log('No character NFT found');
     }
@@ -114,7 +117,7 @@ const renderBrawlers = () => {
     
   }
   else if (currentAccount && characterNFT) {
-    return <Arena characterNFT={characterNFT} />;
+    return <Arena characterNFT={characterNFT} characterSpecialMove={characterSpecialMove}/>;
   }
 };
 

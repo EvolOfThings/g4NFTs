@@ -4,25 +4,110 @@ import { CONTRACT_ADDRESS, transformBossData } from '../../constants';
 import BlockchainBrawlers from '../../utility/BlockchainBrawlers.json';
 import './Arena.css';
 
-const Arena = ({ characterNFT }) => {
+const Arena = ({ characterNFT, characterSpecialMove }) => {
   const [gameContract, setGameContract] = useState(null);
   const [boss, setBoss] = useState(null);
+
+  const [playerCritChanceHP, setPlayerCritChanceHP] = useState(characterNFT.totalHP);
+
+  const [bossTotalHP, setBossTotalHP] = useState();
+  const [bossCritChanceHP, setBossCritChanceHP] = useState();
+  const [bossDamage, setBossDamage] = useState();
+  const [bossSpecialMove, setBossSpecialMove] = useState('');
+
+//   const [bossSpecial, setBossSpecial] = useState(false);
+
+
   const [attackState, setAttackState] = useState('');
 
-  console.log("characterNFT", characterNFT);
 
-  const attackBoss = () => {
-    console.log('characterNFT special move:', characterNFT.specialMove);
+  console.log("characterSpecialMove", characterSpecialMove);
+
+const bossAttacks = async () => {
+    setAttackState('');
+    try {
+        if (gameContract) {
+          setPlayerCritChanceHP(playerCritChanceHP - bossDamage);
+        }
+      } catch (error) {
+        console.error('Error attacking boss:', error);
+        setAttackState('');
+      }
+}
+
+// const SpecialAttackByBoss = (specialMove) => {
+// switch (specialMove) {
+//     case "Heal":
+//         setBossCritChanceHP(bossCritChanceHP >= bossTotalHP ? bossTotalHP : bossCritChanceHP + 30);
+//         break;
+//   case "IncreaseDamage": 
+//   setPlayerCritChanceHP(playerCritChanceHP - (bossDamage + 30));
+//           break;
+//   case "IncreaseDefence":  
+//   setBossCritChanceHP(bossCritChanceHP >= bossTotalHP ? bossTotalHP : bossTotalHP + 20);
+//       break;
+//   case "IncreaseCritChance":  
+//   setBossCritChanceHP(bossCritChanceHP >= bossTotalHP ? bossTotalHP : bossTotalHP + 10);
+//   break;
+//     default:
+//         break;
+// }
+// };
+
+
+  const attackBoss = async () => {
+    // randomBoolean();
     try {
       if (gameContract) {
-        setAttackState('attacking');  
-        console.log('characterNFT special move:', characterNFT.specialMove);
+        setAttackState('attacking');
+        setBossCritChanceHP(bossCritChanceHP - characterNFT.damage);
+        bossAttacks();
+        // !bossSpecial ? bossAttacks() : SpecialAttackByBoss(bossSpecialMove);
       }
     } catch (error) {
       console.error('Error attacking boss:', error);
       setAttackState('');
     }
   };
+
+//   const randomBoolean = () => setBossSpecial(Math.random() > 0.5 ? true : false);
+
+const checkHealth = () => {
+    if(playerCritChanceHP <= 0){
+        alert("You lost");
+        window.location.reload(); 
+    } else if (bossCritChanceHP <= 0){
+        alert("You beat the boss");
+        window.location.reload(); 
+    }
+}
+
+useEffect(()=> {
+    checkHealth();
+},[playerCritChanceHP, bossCritChanceHP])
+  
+  const SpecialAttackBoss = (specialMove) => {
+      console.log("specialMove", specialMove);
+  switch (specialMove) {
+      case "Heal":
+        setPlayerCritChanceHP(playerCritChanceHP >= characterNFT.totalHP ? characterNFT.totalHP : playerCritChanceHP + 30);
+          break;
+    case "IncreaseDamage": 
+    setBossCritChanceHP(bossCritChanceHP - (characterNFT.damage + 30));
+            break;
+    case "IncreaseDefence":  
+    setPlayerCritChanceHP(playerCritChanceHP >= characterNFT.totalHP ? characterNFT.totalHP : playerCritChanceHP + 20);
+        break;
+    case "IncreaseCritChance":  
+    setPlayerCritChanceHP(playerCritChanceHP >= characterNFT.totalHP ? characterNFT.totalHP : playerCritChanceHP + 10);
+    break;
+      default:
+          break;
+  }
+  };
+
+  console.log("playerCritChanceHP", playerCritChanceHP);
+
 
   useEffect(() => {
     const { ethereum } = window;
@@ -46,8 +131,13 @@ const Arena = ({ characterNFT }) => {
   useEffect(() => {
     const fetchBoss = async () => {
       const bossTxn = await gameContract.getBoss(randomBossIndex);
-      console.log('Boss:', bossTxn);
-      setBoss(transformBossData(bossTxn));
+      const tranformedData = transformBossData(bossTxn);
+      setBoss(tranformedData);
+      setBossTotalHP(tranformedData.totalHP);
+      setBossCritChanceHP(tranformedData.totalHP);
+      setBossDamage(tranformedData.damage);
+      const specialMove = await gameContract.specialMoveToString(tranformedData.specialMove);
+      setBossSpecialMove(specialMove);
     };
     if (gameContract) {
       fetchBoss();
@@ -63,25 +153,25 @@ const Arena = ({ characterNFT }) => {
           <div className="image-content">
             <img src={boss.imageURI} alt={`Boss ${boss.name}`} />
             <div className="health-bar">
-              <progress value={boss.critChance} max={boss.totalHP} />
-              <p>{`${boss.critChance} / ${boss.totalHP} HP`}</p>
+              <progress value={bossCritChanceHP} max={bossTotalHP} />
+              <p>{`${bossCritChanceHP} / ${bossTotalHP} HP`}</p>
             </div>
           </div>
+          <div className="stats">
+              <h4>{`⚔️ Attack Damage: ${bossDamage}`}</h4>
+              <h4>{`⚔️ Special Move: ${bossSpecialMove}`}</h4>
+            </div>
         </div>
       </div>
     )}
 
-{boss && <div className="attack-container">
-          <button className="cta-button" onClick={() => attackBoss()}>
-            {`💥 Attack ${boss.name}`}
-          </button>
-        </div>}
+    {/* {bossSpecial && <p>Boss Special Move Activated</p>} */}
 
 {characterNFT && (
       <div className="players-container">
         <div className="player-container">
           <h2>Your Character</h2>
-          <div className="player">
+          <div className={`player ${attackState}`}>
             <div className="image-content">
               <h2>{characterNFT.name}</h2>
               <img
@@ -89,19 +179,27 @@ const Arena = ({ characterNFT }) => {
                 alt={`Character ${characterNFT.name}`}
               />
               <div className="health-bar">
-                <progress value={characterNFT.critChance} max={characterNFT.totalHP} />
-                <p>{`${characterNFT.critChance} / ${characterNFT.totalHP} HP`}</p>
+                <progress value={playerCritChanceHP} max={characterNFT.totalHP} />
+                <p>{`${playerCritChanceHP} / ${characterNFT.totalHP} HP`}</p>
               </div>
             </div>
             <div className="stats">
               <h4>{`⚔️ Attack Damage: ${characterNFT.damage}`}</h4>
+              <h4>{`⚔️ Special Move: ${characterSpecialMove}`}</h4>
             </div>
           </div>
         </div>
       </div>
     )}
-
-
+    
+{boss && <div className="attack-container">
+          <button className="cta-button" onClick={() => attackBoss()}>
+            {`💥 Attack`}
+          </button>
+          <button className="cta-button" onClick={() => SpecialAttackBoss(characterSpecialMove)}>
+            {`Special Move`}
+          </button>
+        </div>}
 
     </div>
   );
