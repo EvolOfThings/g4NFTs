@@ -1,4 +1,4 @@
-const CONTRACT_ADDRESS = '0x1e9f8f443CBc9395042206AD7c1D758B1D797151';
+const CONTRACT_ADDRESS = '0x065034404023EC7f78859B25fA52528Ef848cBae';
 
 const transformBrawlerData = (BrawlerData) => {
     return {

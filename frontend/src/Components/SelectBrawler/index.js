@@ -61,7 +61,7 @@ const SelectBrawler = ({ setBrawlerNFT }) => {
         gameContract.off('BrawlerMinted', onBrawlerMint);
       }
     };
-  }, [gameContract]);
+  }, [gameContract, setBrawlerNFT]);
 
   const mintBrawlerAction = (brawlerId) => async () => {
     setMintingCharacter(true);
