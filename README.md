@@ -17,7 +17,7 @@ npx hardhat help
 ##For running Web App Frontend
 
 ```
-goto /frontend dir
+cd frontend
 npm install
 npm start run
 open http://localhost:3000/ to view the web app
